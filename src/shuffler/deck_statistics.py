@@ -1,6 +1,20 @@
-from typing import Callable
-import numpy as np
+import time
 from concurrent.futures import ProcessPoolExecutor
+from dataclasses import dataclass
+from typing import Callable, Tuple, Optional
+
+import numpy as np
+from scipy.stats import norm
+
+
+@dataclass
+class Results:
+    time_taken: float
+    position_average: float
+    position_distribution: Optional[Tuple[float, float]]
+
+    def __str__(self):
+        return f"Average position: {self.position_average:.2f} ({self.time_taken:.2f}s)"
 
 
 def stats_main(
@@ -10,7 +24,7 @@ def stats_main(
     number_of_shuffles: int = 1,
     num_threads: int = 5,
 ):
-    # Create multiple copies of the deck
+    start_time = time.time()
     num_elements_per_chunk = sample_size // num_threads
     # Use ProcessPoolExecutor for parallel processing
     with ProcessPoolExecutor(max_workers=num_threads) as executor:
@@ -31,8 +45,13 @@ def stats_main(
 
     # Average the distances from all chunks
     overall_avg_distance = np.mean(chunk_distances)
-
-    return overall_avg_distance
+    elapsed_time = time.time() - start_time
+    result = Results(
+        time_taken=elapsed_time,
+        position_average=overall_avg_distance,
+        position_distribution=None,
+    )
+    return result
 
 
 def shuffle_chunk_and_compute_position_stat(
