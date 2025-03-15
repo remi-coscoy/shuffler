@@ -9,11 +9,11 @@ def main():
     figure_path.mkdir(exist_ok=True)
     deck = StandardDeck()
     deck.compute_mode()
-    sample_size = 10_000_000
+    sample_size = 100000
     num_cpus = 4
-    for num_shuffle in [1]:
+    for num_shuffle in [1,100]:
         print(f"**{num_shuffle} shuffles**")
-        for shuffle_method in [lazy_shuffle, random_shuffle, no_shuffle]:
+        for shuffle_method in [random_shuffle, no_shuffle, lazy_shuffle]:
 
             result = stats_main(
                 arr=deck.cards,

@@ -30,13 +30,15 @@ class Results:
 
     def __str__(self):
         return f"""
+        Lower is better
         Time: {self.time_taken:.2f}s
         Position Metric: {self.position_metric:.2f}
         Kullback–Leibler divergence to random: {self.kl_div_to_rand:.2f}
-        Sequence metric: 1: {self.sequence_metric[0]:.0%} | 2: {self.sequence_metric[1]:.0%} |3: {self.sequence_metric[2]:.0%} |4:{self.sequence_metric[3]:.0%}"""
+        Sequence metric: {self.sequence_metric:.2f}"""
 
 
 mean_std_by_sub_size = {50: (1.6956037307692304, 0.17847165490304848)}
+random_non_sequence_proportion = 0.9626396153846154
 
 
 def stats_main(
@@ -67,9 +69,11 @@ def stats_main(
     multithread_results = [future.result() for future in futures]
     position_metrics, sequence_metrics, mus, sigmas = zip(*multithread_results)
     # Average the metrics from all chunks
-    sequence_metrics = np.vstack(sequence_metrics)
-    position_metric = np.mean(position_metrics)
-    sequence_metric = sequence_metrics.mean(axis=0)
+    sequence_metric = np.mean(sequence_metrics)
+    sequence_metric = np.abs(sequence_metric - random_non_sequence_proportion) / (
+        random_non_sequence_proportion
+    )
+    position_metric = np.mean(position_metrics) / 13
     mu = np.mean(mus)
     sigma = np.mean(sigmas)
     kl_div = kl_divergence_normal(

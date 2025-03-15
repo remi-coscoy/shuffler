@@ -33,7 +33,14 @@ def kl_divergence_normal(mu1, sigma1, mu2, sigma2):
     Returns:
     KL divergence D_KL(P || Q).
     """
-    if sigma1 == 0 or sigma2 == 0:
+    if (
+        sigma1 == 0
+        or sigma2 == 0
+        or np.isnan(mu1)
+        or np.isnan(sigma1)
+        or np.isnan(mu2)
+        or np.isnan(sigma2)
+    ):
         return np.inf
     kl_div = (
         np.log(sigma2 / sigma1) + (sigma1**2 + (mu1 - mu2) ** 2) / (2 * sigma2**2) - 0.5
