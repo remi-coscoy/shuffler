@@ -30,7 +30,7 @@ class Deck(ABC):
     suits: List[Suit]
     ranks: List[Rank]
     display_cards: List[Card]
-    compute_cards: np.typing.NDArray[np.int32]
+    compute_cards: np.typing.NDArray[np.int8]
 
     def __init__(self):
         self.is_compute = False
@@ -61,7 +61,9 @@ class Deck(ABC):
 
     def compute_mode(self):
         if not self.is_compute:
-            self.compute_cards = np.array([card.order for card in self.display_cards])
+            self.compute_cards = np.array(
+                [card.order for card in self.display_cards], dtype=np.int8
+            )
             self.is_compute = True
 
     def display_mode(self):
