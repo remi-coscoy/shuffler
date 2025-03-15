@@ -13,12 +13,14 @@ from deck_statistics.gaussian_utils import (
     kl_divergence_normal,
 )
 from deck_statistics.position_stat import position_distrib, position_stat
+from deck_statistics.sequence_stat import sequence_stat
 
 
 @dataclass
 class Results:
     time_taken: float
-    position_average: float
+    position_metric: float
+    sequence_metric: float
     kl_div_to_rand: float
     position_distribution: Tuple[float, float]
     position_figure: Optional[plt.Figure]
@@ -27,7 +29,11 @@ class Results:
         self.position_figure.savefig(output_path)
 
     def __str__(self):
-        return f"Average position: {self.position_average:.2f}, Kullback–Leibler divergence to random: {self.kl_div_to_rand:.2f} ({self.time_taken:.2f}s)"
+        return f"""
+        Time: {self.time_taken:.2f}s
+        Position Metric: {self.position_metric:.2f}
+        Kullback–Leibler divergence to random: {self.kl_div_to_rand:.2f}
+        Sequence metric: 1: {self.sequence_metric[0]:.0%} | 2: {self.sequence_metric[1]:.0%} |3: {self.sequence_metric[2]:.0%} |4:{self.sequence_metric[3]:.0%}"""
 
 
 mean_std_by_sub_size = {50: (1.6956037307692304, 0.17847165490304848)}
@@ -39,48 +45,33 @@ def stats_main(
     sample_size: int = 100000,
     subsample_size: int = 50,
     number_of_shuffles: int = 1,
-    num_threads: int = 5,
+    num_cpus: int = 5,
     is_plot=False,
 ):
     start_time = time.time()
-    num_elements_per_chunk = sample_size // num_threads
+    num_elements_per_chunk = sample_size // num_cpus
     # Use ProcessPoolExecutor for parallel processing
-    with ProcessPoolExecutor(max_workers=num_threads) as executor:
+    with ProcessPoolExecutor(max_workers=num_cpus) as executor:
         futures = []
-        for _ in range(num_threads):
+        for _ in range(num_cpus):
             futures.append(
                 executor.submit(
-                    shuffle_chunk_and_compute_position_stat,
+                    shuffle_chunk_and_compute_stat,
                     arr,
                     num_elements_per_chunk,
                     shuffle_method,
                     number_of_shuffles,
                 )
             )
-
-        # Collect the results after all processes finish
-        multithread_results = [future.result() for future in futures]
-        chunk_distances, chunks = zip(*multithread_results)
-
-    # Average the distances from all chunks
-    overall_avg_distance = np.mean(chunk_distances)
-    with ProcessPoolExecutor(max_workers=num_threads) as executor:
-        futures = []
-        for chunk in chunks:
-            futures.append(
-                executor.submit(
-                    position_distrib,
-                    chunk,
-                    arr,
-                    subsample_size,
-                )
-            )
-
-        # Collect the results after all processes finish
-        avg_distance_chunks = [future.result() for future in futures]
-
-    avg_distance_arr = np.vstack(avg_distance_chunks)
-    mu, sigma = norm.fit(avg_distance_arr)
+    # Collect the results after all processes finish
+    multithread_results = [future.result() for future in futures]
+    position_metrics, sequence_metrics, mus, sigmas = zip(*multithread_results)
+    # Average the metrics from all chunks
+    sequence_metrics = np.vstack(sequence_metrics)
+    position_metric = np.mean(position_metrics)
+    sequence_metric = sequence_metrics.mean(axis=0)
+    mu = np.mean(mus)
+    sigma = np.mean(sigmas)
     kl_div = kl_divergence_normal(
         mu,
         sigma,
@@ -88,15 +79,14 @@ def stats_main(
         mean_std_by_sub_size[subsample_size][1],
     )
     if is_plot:
-        position_figure = get_normal_distribution_plot(
-            avg_distance_arr, mu=mu, sigma=sigma
-        )
+        position_figure = get_normal_distribution_plot(mu=mu, sigma=sigma)
     else:
         position_figure = None
     elapsed_time = time.time() - start_time
     result = Results(
         time_taken=elapsed_time,
-        position_average=overall_avg_distance,
+        position_metric=position_metric,
+        sequence_metric=sequence_metric,
         position_distribution=(mu, sigma),
         position_figure=position_figure,
         kl_div_to_rand=kl_div,
@@ -105,7 +95,7 @@ def stats_main(
     return result
 
 
-def shuffle_chunk_and_compute_position_stat(
+def shuffle_chunk_and_compute_stat(
     arr: np.ndarray,
     num_elements_per_chunk: int,
     shuffle_method: Callable[[np.ndarray], np.ndarray],
@@ -116,5 +106,10 @@ def shuffle_chunk_and_compute_position_stat(
     for _ in range(number_of_shuffles):
         chunk = shuffle_method(chunk)
 
+    position_metric = position_stat(chunk, arr)
+    sequence_metric = sequence_stat(chunk)
+    avg_distance_chunk = position_distrib(chunk, arr)
+    mu, sigma = norm.fit(avg_distance_chunk)
+
     # After shuffling, calculate the average distance for the current chunk
-    return position_stat(chunk, arr), chunk
+    return position_metric, sequence_metric, mu, sigma

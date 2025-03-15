@@ -4,27 +4,8 @@ import seaborn as sns
 from scipy.stats import norm
 
 
-def get_normal_distribution_plot(
-    stat_arr: np.ndarray, mu, sigma, sample_size: int = 500
-) -> plt.Figure:
-    # Downsample if data is too large
-    if len(stat_arr) > sample_size:
-        stat_arr = np.random.choice(stat_arr, sample_size, replace=False)
-    # Create a new figure for the plot
+def get_normal_distribution_plot(mu, sigma, sample_size: int = 500) -> plt.Figure:
     fig, ax = plt.subplots(figsize=(8, 6))
-
-    # Plot the histogram of the average distances
-    sns.histplot(
-        stat_arr,
-        kde=False,
-        stat="density",
-        bins=30,
-        color="blue",
-        alpha=0.6,
-        label="Average Distances",
-        ax=ax,
-    )
-
     # Plot the fitted normal distribution
     xmin, xmax = ax.get_xlim()
     x = np.linspace(xmin, xmax, 100)
@@ -52,6 +33,8 @@ def kl_divergence_normal(mu1, sigma1, mu2, sigma2):
     Returns:
     KL divergence D_KL(P || Q).
     """
+    if sigma1 == 0 or sigma2 == 0:
+        return np.inf
     kl_div = (
         np.log(sigma2 / sigma1) + (sigma1**2 + (mu1 - mu2) ** 2) / (2 * sigma2**2) - 0.5
     )
