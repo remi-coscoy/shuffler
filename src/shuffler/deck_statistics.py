@@ -13,20 +13,25 @@ from pathlib import Path
 class Results:
     time_taken: float
     position_average: float
-    position_distribution: Optional[Tuple[float, float]]
-    figure: Optional[plt.Figure] = None
+    kl_div_to_rand: float
+    position_distribution: Tuple[float, float]
+    position_figure: plt.Figure
 
     def save_figure(self, output_path: Path):
-        self.figure.savefig(output_path)
+        self.position_figure.savefig(output_path)
 
     def __str__(self):
-        return f"Average position: {self.position_average:.2f}, Distribution: mean: {self.position_distribution[0]}, std: {self.position_distribution[1]} ({self.time_taken:.2f}s)"
+        return f"Average position: {self.position_average:.2f}, Kullback–Leibler divergence to random: {self.kl_div_to_rand:.2f} ({self.time_taken:.2f}s)"
+
+
+mean_std_by_sub_size = {50: (1.6956037307692304, 0.17847165490304848)}
 
 
 def stats_main(
     arr: np.ndarray,
     shuffle_method: Callable[[np.ndarray], np.ndarray],
     sample_size: int = 100000,
+    subsample_size: int = 50,
     number_of_shuffles: int = 1,
     num_threads: int = 5,
 ):
@@ -52,14 +57,25 @@ def stats_main(
 
     # Average the distances from all chunks
     overall_avg_distance = np.mean(chunk_distances)
-    avg_distance_arr = position_distrib(np.vstack(chunks), arr)
+    avg_distance_arr = position_distrib(
+        np.vstack(chunks), arr, subsample_size=subsample_size
+    )
+
+    mu, sigma = norm.fit(avg_distance_arr)
+    kl_div = kl_divergence_normal(
+        mu,
+        sigma,
+        mean_std_by_sub_size[subsample_size][0],
+        mean_std_by_sub_size[subsample_size][1],
+    )
 
     elapsed_time = time.time() - start_time
     result = Results(
         time_taken=elapsed_time,
         position_average=overall_avg_distance,
-        position_distribution=norm.fit(avg_distance_arr),
-        figure=get_normal_distribution_plot(avg_distance_arr),
+        position_distribution=(mu, sigma),
+        position_figure=get_normal_distribution_plot(avg_distance_arr),
+        kl_div_to_rand=kl_div,
     )
     return result
 
@@ -73,7 +89,7 @@ def shuffle_chunk_and_compute_position_stat(
     chunk = np.tile(arr, (num_elements_per_chunk, 1))
     # Shuffle each row of the chunk independently for a specified number of shuffles
     for _ in range(number_of_shuffles):
-        chunk = np.apply_along_axis(shuffle_method, 1, chunk)
+        chunk = shuffle_method(chunk)
 
     # After shuffling, calculate the average distance for the current chunk
     return position_stat(chunk, arr), chunk
@@ -160,3 +176,20 @@ def get_normal_distribution_plot(stat_arr: np.ndarray) -> plt.Figure:
 
     # Return the figure
     return fig
+
+
+def kl_divergence_normal(mu1, sigma1, mu2, sigma2):
+    """
+    Calculate the KL divergence between two normal distributions.
+
+    Parameters:
+    mu1, sigma1: Mean and standard deviation of the first normal distribution.
+    mu2, sigma2: Mean and standard deviation of the second normal distribution.
+
+    Returns:
+    KL divergence D_KL(P || Q).
+    """
+    kl_div = (
+        np.log(sigma2 / sigma1) + (sigma1**2 + (mu1 - mu2) ** 2) / (2 * sigma2**2) - 0.5
+    )
+    return kl_div

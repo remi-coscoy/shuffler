@@ -9,7 +9,7 @@ def main():
     figure_path.mkdir(exist_ok=True)
     deck = StandardDeck()
     deck.compute_mode()
-    sample_size = 1000000
+    sample_size = 10_000_000
     num_threads = 5
     for num_shuffle in [1, 10, 100]:
         print(f"**{num_shuffle} shuffles**")
