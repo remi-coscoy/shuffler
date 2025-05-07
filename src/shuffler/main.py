@@ -1,8 +1,8 @@
 from pathlib import Path
 
-from deck import StandardDeck
-from deck_statistics.stats_main import stats_main
-from shuffles import lazy_shuffle, random_shuffle
+from shuffler.deck import StandardDeck
+from shuffler.deck_statistics.stats_main import stats_main
+from shuffler.shuffles import lazy_shuffle, random_shuffle
 
 
 def main():
@@ -24,10 +24,8 @@ def main():
                 is_plot=True,
             )
             result.save_figure(
-                figure_path
-                / f"pos_{shuffle_method.__name__}_{sample_size}_samples_{num_shuffle}_shuffles.png",
-                figure_path
-                / f"seq_{shuffle_method.__name__}_{sample_size}_samples_{num_shuffle}_shuffles.png",
+                figure_path / f"pos_{shuffle_method.__name__}_{sample_size}_samples_{num_shuffle}_shuffles.png",
+                figure_path / f"seq_{shuffle_method.__name__}_{sample_size}_samples_{num_shuffle}_shuffles.png",
             )
 
             print(f"{shuffle_method.__name__}: {result}")

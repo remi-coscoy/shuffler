@@ -6,13 +6,14 @@ from pathlib import Path
 
 import matplotlib.pyplot as plt
 import numpy as np
-from deck_statistics.gaussian_utils import (
+from scipy.stats import norm
+
+from shuffler.deck_statistics.gaussian_utils import (
     get_normal_distribution_plot,
     kl_divergence_normal,
 )
-from deck_statistics.position_stat import position_distrib, position_stat
-from deck_statistics.sequence_stat import sequence_distrib, sequence_stat
-from scipy.stats import norm
+from shuffler.deck_statistics.position_stat import position_distrib, position_stat
+from shuffler.deck_statistics.sequence_stat import sequence_distrib, sequence_stat
 
 
 @dataclass
@@ -58,13 +59,8 @@ def stats_main(
     num_cpus: int = 5,
     is_plot=False,
 ):
-    if (
-        subsample_size not in mean_std_by_sub_size_seq
-        or subsample_size not in mean_std_by_sub_size_pos
-    ):
-        raise ValueError(
-            "Please compute the mean and sigma of the random shuffle for this subsample first"
-        )
+    if subsample_size not in mean_std_by_sub_size_seq or subsample_size not in mean_std_by_sub_size_pos:
+        raise ValueError("Please compute the mean and sigma of the random shuffle for this subsample first")
     start_time = time.time()
     num_elements_per_chunk = sample_size // num_cpus
     # Use ProcessPoolExecutor for parallel processing
@@ -87,9 +83,7 @@ def stats_main(
     )
     # Average the metrics from all chunks
     sequence_metric = np.mean(sequence_metrics)
-    sequence_metric = np.abs(sequence_metric - random_non_sequence_proportion) / (
-        random_non_sequence_proportion
-    )
+    sequence_metric = np.abs(sequence_metric - random_non_sequence_proportion) / (random_non_sequence_proportion)
     position_metric = np.mean(position_metrics) / 13
     mu_pos = np.mean(mus_pos)
     mu_seq = np.mean(mus_seq)

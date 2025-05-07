@@ -11,23 +11,23 @@ dependencies = [
     "seaborn>=0.13.2",
 ]
 
-[tool.ruff.lint]
-select = [
-    "E",
-    "F",
-    "UP",
-    "B",
-    "SIM",
-    "I",
-]
-
 [dependency-groups]
 dev = [
     "pyright>=1.1.400",
     "pytest>=8.3.5",
 ]
 
-[tool.pytest.ini_options]
-pythonpath = [
-  "src"
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project.scripts]
+main = "shuffler.main:main"
+
+[tool.ruff]
+line-length = 120
+
+[tool.ruff.lint]
+select = [
+    "E", "F", "UP", "B", "SIM", "I",
 ]

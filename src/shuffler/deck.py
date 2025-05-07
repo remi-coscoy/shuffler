@@ -3,7 +3,8 @@ from collections.abc import Callable
 from dataclasses import dataclass
 
 import numpy as np
-from shuffles import random_shuffle
+
+from shuffler.shuffles import random_shuffle
 
 
 @dataclass
@@ -43,9 +44,7 @@ class Deck(ABC):
     def create(self):
         for suite in self.suits:
             for rank in self.ranks:
-                self.display_cards.append(
-                    Card(suite, rank, order=len(self.ranks) * suite.order + rank.order)
-                )
+                self.display_cards.append(Card(suite, rank, order=len(self.ranks) * suite.order + rank.order))
 
     def sort(self):
         if self.is_compute:
@@ -63,9 +62,7 @@ class Deck(ABC):
 
     def compute_mode(self):
         if not self.is_compute:
-            self.compute_cards = np.array(
-                [card.order for card in self.display_cards], dtype=np.int8
-            )
+            self.compute_cards = np.array([card.order for card in self.display_cards], dtype=np.int8)
             self.is_compute = True
 
     def display_mode(self):
@@ -96,9 +93,7 @@ class Deck(ABC):
 
 def shuffle_deck(
     deck: Deck,
-    shuffle_method: Callable[
-        [np.typing.NDArray[np.int32]], np.typing.NDArray[np.int32]
-    ],
+    shuffle_method: Callable[[np.typing.NDArray[np.int32]], np.typing.NDArray[np.int32]],
 ):
     """
     Wrapper for shuffle functions to keep display and compute mode
