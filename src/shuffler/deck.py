@@ -1,7 +1,9 @@
 from abc import ABC
+from collections.abc import Callable
 from dataclasses import dataclass
 
 import numpy as np
+from shuffles import random_shuffle
 
 
 @dataclass
@@ -92,6 +94,25 @@ class Deck(ABC):
         return len(self.cards)
 
 
+def shuffle_deck(
+    deck: Deck,
+    shuffle_method: Callable[
+        [np.typing.NDArray[np.int32]], np.typing.NDArray[np.int32]
+    ],
+):
+    """
+    Wrapper for shuffle functions to keep display and compute mode
+    """
+    display_flag = not deck.is_compute
+    if display_flag:
+        deck.compute_mode()
+    # Shuffle methods are vectorized for matrixes
+    deck.cards = shuffle_method(deck.cards.reshape(1, -1))[0]
+    if display_flag:
+        return deck.display_mode()
+    return deck
+
+
 class StandardDeck(Deck):
     suits = [
         Suit(name="Club", order=0),
@@ -127,7 +148,12 @@ if __name__ == "__main__":
     print(deck)
     print(f"\nTotal cards in deck: {len(deck)}")
 
-    np.random.shuffle(deck.cards)
+    shuffle_deck(deck=deck, shuffle_method=random_shuffle)
+    print("Shuffled Compute Deck:")
+    print(deck)
+
     deck.display_mode()
-    print("Shuffled Deck:")
+    shuffle_deck(deck=deck, shuffle_method=random_shuffle)
+
+    print("Shuffled Display Deck:")
     print(deck)
