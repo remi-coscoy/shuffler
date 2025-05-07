@@ -1,8 +1,8 @@
 import time
+from collections.abc import Callable
 from concurrent.futures import ProcessPoolExecutor
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Callable, Optional, Tuple
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -20,11 +20,11 @@ class Results:
     time_taken: float
     position_metric: float
     kl_div_pos: float
-    position_distribution: Tuple[float, float]
-    position_figure: Optional[plt.Figure]
+    position_distribution: tuple[float, float]
+    position_figure: plt.Figure | None
     kl_div_seq: float
-    sequence_distribution: Tuple[float, float]
-    sequence_figure: Optional[plt.Figure]
+    sequence_distribution: tuple[float, float]
+    sequence_figure: plt.Figure | None
     sequence_metric: float
 
     def save_figure(self, output_path_pos: Path, output_path_seq: Path):
@@ -83,7 +83,7 @@ def stats_main(
     # Collect the results after all processes finish
     multithread_results = [future.result() for future in futures]
     position_metrics, sequence_metrics, mus_pos, mus_seq, sigmas_pos, sigmas_seq = zip(
-        *multithread_results
+        *multithread_results, strict=False
     )
     # Average the metrics from all chunks
     sequence_metric = np.mean(sequence_metrics)

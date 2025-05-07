@@ -1,6 +1,6 @@
 from abc import ABC
-from dataclasses import dataclass, field
-from typing import List, Optional
+from dataclasses import dataclass
+
 import numpy as np
 
 
@@ -27,9 +27,9 @@ class Card:
 
 
 class Deck(ABC):
-    suits: List[Suit]
-    ranks: List[Rank]
-    display_cards: List[Card]
+    suits: list[Suit]
+    ranks: list[Rank]
+    display_cards: list[Card]
     compute_cards: np.typing.NDArray[np.int8]
 
     def __init__(self):

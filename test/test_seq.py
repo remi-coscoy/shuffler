@@ -1,6 +1,7 @@
-from shuffler.deck_statistics.sequence_stat import sequence_stat
 import numpy as np
 import pytest
+
+from shuffler.deck_statistics.sequence_stat import sequence_stat
 
 
 @pytest.fixture
