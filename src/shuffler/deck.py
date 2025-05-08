@@ -4,7 +4,10 @@ from dataclasses import dataclass
 
 import numpy as np
 
+from shuffler.config.logger import setup_logger
 from shuffler.shuffles import random_shuffle
+
+logger = setup_logger(__name__)
 
 
 @dataclass
@@ -134,21 +137,21 @@ class StandardDeck(Deck):
 
 if __name__ == "__main__":
     deck = StandardDeck()
-    print("Display Deck:")
-    print(deck)
-    print(f"\nTotal cards in deck: {len(deck)}")
+    logger.info("Display Deck:")
+    logger.info(deck)
+    logger.info(f"\nTotal cards in deck: {len(deck)}")
 
     deck.compute_mode()
-    print("Compute Deck:")
-    print(deck)
-    print(f"\nTotal cards in deck: {len(deck)}")
+    logger.info("Compute Deck:")
+    logger.info(deck)
+    logger.info(f"\nTotal cards in deck: {len(deck)}")
 
     shuffle_deck(deck=deck, shuffle_method=random_shuffle)
-    print("Shuffled Compute Deck:")
-    print(deck)
+    logger.info("Shuffled Compute Deck:")
+    logger.info(deck)
 
     deck.display_mode()
     shuffle_deck(deck=deck, shuffle_method=random_shuffle)
 
-    print("Shuffled Display Deck:")
-    print(deck)
+    logger.info("Shuffled Display Deck:")
+    logger.info(deck)
